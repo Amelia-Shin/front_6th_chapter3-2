@@ -3,7 +3,7 @@ import { http, HttpResponse } from 'msw';
 import { server } from '../setupTests';
 import { Event } from '../types';
 
-// ! Hard 여기 제공 안함
+// 기본 이벤트 생성/조회를 위한 mock handler
 export const setupMockHandlerCreation = (initEvents = [] as Event[]) => {
   const mockEvents: Event[] = [...initEvents];
 
@@ -13,13 +13,25 @@ export const setupMockHandlerCreation = (initEvents = [] as Event[]) => {
     }),
     http.post('/api/events', async ({ request }) => {
       const newEvent = (await request.json()) as Event;
-      newEvent.id = String(mockEvents.length + 1); // 간단한 ID 생성
+      newEvent.id = String(mockEvents.length + 1);
       mockEvents.push(newEvent);
       return HttpResponse.json(newEvent, { status: 201 });
+    }),
+    http.post('/api/events-list', async ({ request }) => {
+      const { events: newEvents } = (await request.json()) as { events: Event[] };
+
+      const processedEvents = newEvents.map((event, index) => ({
+        ...event,
+        id: String(mockEvents.length + index + 1),
+      }));
+
+      mockEvents.push(...processedEvents);
+      return HttpResponse.json(processedEvents, { status: 201 });
     })
   );
 };
 
+// 이벤트 수정을 위한 mock handler
 export const setupMockHandlerUpdating = () => {
   const mockEvents: Event[] = [
     {
@@ -57,12 +69,28 @@ export const setupMockHandlerUpdating = () => {
       const updatedEvent = (await request.json()) as Event;
       const index = mockEvents.findIndex((event) => event.id === id);
 
-      mockEvents[index] = { ...mockEvents[index], ...updatedEvent };
-      return HttpResponse.json(mockEvents[index]);
+      if (index > -1) {
+        mockEvents[index] = { ...mockEvents[index], ...updatedEvent };
+        return HttpResponse.json(mockEvents[index]);
+      }
+      return new HttpResponse(null, { status: 404 });
+    }),
+    http.put('/api/events-list', async ({ request }) => {
+      const { events: updatedEvents } = (await request.json()) as { events: Event[] };
+
+      updatedEvents.forEach((event) => {
+        const eventIndex = mockEvents.findIndex((target) => target.id === event.id);
+        if (eventIndex > -1) {
+          mockEvents[eventIndex] = { ...mockEvents[eventIndex], ...event };
+        }
+      });
+
+      return HttpResponse.json(mockEvents);
     })
   );
 };
 
+// 이벤트 삭제를 위한 mock handler
 export const setupMockHandlerDeletion = () => {
   const mockEvents: Event[] = [
     {
@@ -87,13 +115,16 @@ export const setupMockHandlerDeletion = () => {
       const { id } = params;
       const index = mockEvents.findIndex((event) => event.id === id);
 
-      mockEvents.splice(index, 1);
-      return new HttpResponse(null, { status: 204 });
+      if (index > -1) {
+        mockEvents.splice(index, 1);
+        return new HttpResponse(null, { status: 204 });
+      }
+      return new HttpResponse(null, { status: 404 });
     })
   );
 };
 
-// 반복 일정 테스트를 위한 모킹 함수들
+// 반복 일정 테스트를 위한 mock handler
 export const setupMockHandlerRepeatEvents = () => {
   const mockEvents: Event[] = [
     {
@@ -141,50 +172,30 @@ export const setupMockHandlerRepeatEvents = () => {
     http.post('/api/events-list', async ({ request }) => {
       const { events: newEvents } = (await request.json()) as { events: Event[] };
 
-      const processedEvents = newEvents.map((event) => {
-        return {
-          ...event,
-          repeat: {
-            ...event.repeat,
-          },
-        };
-      });
+      const processedEvents = newEvents.map((event, index) => ({
+        ...event,
+        id: String(mockEvents.length + index + 1),
+      }));
 
       mockEvents.push(...processedEvents);
       return HttpResponse.json(processedEvents, { status: 201 });
     }),
     http.put('/api/events-list', async ({ request }) => {
       const { events: updatedEvents } = (await request.json()) as { events: Event[] };
-      let isUpdated = false;
 
-      const newEvents = [...mockEvents];
       updatedEvents.forEach((event) => {
         const eventIndex = mockEvents.findIndex((target) => target.id === event.id);
         if (eventIndex > -1) {
-          isUpdated = true;
-          newEvents[eventIndex] = { ...mockEvents[eventIndex], ...event };
+          mockEvents[eventIndex] = { ...mockEvents[eventIndex], ...event };
         }
       });
 
-      if (isUpdated) {
-        // mockEvents 배열 업데이트
-        mockEvents.splice(0, mockEvents.length, ...newEvents);
-        return HttpResponse.json(mockEvents);
-      } else {
-        return new HttpResponse(null, { status: 404 });
-      }
-    }),
-    http.delete('/api/events-list', async ({ request }) => {
-      const { eventIds } = (await request.json()) as { eventIds: string[] };
-      const newEvents = mockEvents.filter((event) => !eventIds.includes(event.id));
-
-      // mockEvents 배열 업데이트
-      mockEvents.splice(0, mockEvents.length, ...newEvents);
-      return new HttpResponse(null, { status: 204 });
+      return HttpResponse.json(mockEvents);
     })
   );
 };
 
+// 단일 반복 일정 수정/삭제를 위한 mock handler
 export const setupMockHandlerSingleRepeatEvent = () => {
   const mockEvents: Event[] = [
     {
@@ -211,16 +222,14 @@ export const setupMockHandlerSingleRepeatEvent = () => {
       const index = mockEvents.findIndex((event) => event.id === id);
 
       if (index > -1) {
-        // 반복 일정을 단일 일정으로 변경
         mockEvents[index] = {
           ...mockEvents[index],
           ...updatedEvent,
           repeat: { type: 'none', interval: 0 },
         };
         return HttpResponse.json(mockEvents[index]);
-      } else {
-        return new HttpResponse(null, { status: 404 });
       }
+      return new HttpResponse(null, { status: 404 });
     }),
     http.delete('/api/events/:id', ({ params }) => {
       const { id } = params;
@@ -229,9 +238,8 @@ export const setupMockHandlerSingleRepeatEvent = () => {
       if (index > -1) {
         mockEvents.splice(index, 1);
         return new HttpResponse(null, { status: 204 });
-      } else {
-        return new HttpResponse(null, { status: 404 });
       }
+      return new HttpResponse(null, { status: 404 });
     })
   );
 };

@@ -39,21 +39,47 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
     return response;
   };
 
-  const saveRepeatEvents = async (eventData: EventForm) => {
+  const saveRepeatEvents = async (eventData: EventForm, isEditing = false) => {
     const repeatEvents = generateRepeatEvents(eventData);
+    const method = isEditing ? 'PUT' : 'POST';
+    const url = isEditing ? '/api/events-list' : '/api/events-list';
 
-    // 서버의 /api/events-list 엔드포인트를 사용하여 반복 일정을 한 번에 저장
-    const response = await fetch('/api/events-list', {
-      method: 'POST',
+    // 서버의 /api/events-list 엔드포인트를 사용하여 반복 일정을 한 번에 저장/수정
+    const response = await fetch(url, {
+      method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ events: repeatEvents }),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to create repeat events');
+      throw new Error(`Failed to ${isEditing ? 'update' : 'create'} repeat events`);
     }
 
     return response;
+  };
+
+  const updateRepeatEvents = async (originalEvent: Event, updatedEventData: EventForm) => {
+    // 기존 반복 일정들을 찾아서 삭제
+    const repeatEvents = events.filter(
+      (event) =>
+        event.repeat.type !== 'none' &&
+        event.title === originalEvent.title &&
+        event.startTime === originalEvent.startTime &&
+        event.endTime === originalEvent.endTime
+    );
+
+    // 기존 반복 일정들 삭제
+    for (const event of repeatEvents) {
+      await deleteEvent(event.id);
+    }
+
+    // 새로운 반복 일정 생성 (editing 분기 처리)
+    if (updatedEventData.repeat.type !== 'none') {
+      await saveRepeatEvents(updatedEventData, true); // editing 모드로 호출
+    } else {
+      // 반복을 해제한 경우 단일 일정으로 저장
+      await saveSingleEvent(updatedEventData);
+    }
   };
 
   const saveEvent = async (eventData: Event | EventForm) => {
@@ -61,9 +87,14 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
       const isRepeatEvent = eventData.repeat?.type !== 'none';
 
       if (editing) {
-        // 수정 시에는 항상 단일 일정으로 처리
-        await saveSingleEvent(eventData);
-        enqueueSnackbar('일정이 수정되었습니다.', { variant: 'success' });
+        // 수정 시에는 반복 일정인지 확인하여 처리
+        if (isRepeatEvent) {
+          await updateRepeatEvents(eventData as Event, eventData as EventForm);
+          enqueueSnackbar('반복 일정이 수정되었습니다.', { variant: 'success' });
+        } else {
+          await saveSingleEvent(eventData);
+          enqueueSnackbar('일정이 수정되었습니다.', { variant: 'success' });
+        }
       } else {
         // 신규 생성 시 반복/단일 일정 구분
         if (isRepeatEvent) {
