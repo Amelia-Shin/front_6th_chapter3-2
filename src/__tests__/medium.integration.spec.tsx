@@ -372,14 +372,14 @@ it('notificationTime을 10으로 하면 지정 시간 10분 전 알람 텍스트
 });
 
 describe('반복 일정', () => {
-  beforeEach(() => {
-    vi.setSystemTime(new Date('2025-10-15'));
-  });
+  // beforeEach(() => {
+  //   vi.setSystemTime(new Date('2025-10-15'));
+  // });
 
-  afterEach(() => {
-    vi.useRealTimers();
-    server.resetHandlers();
-  });
+  // afterEach(() => {
+  //   vi.useRealTimers();
+  //   server.resetHandlers();
+  // });
 
   describe('1. 반복 유형 선택 테스트', () => {
     it('일정 생성 시 반복 유형을 선택할 수 있다', async () => {

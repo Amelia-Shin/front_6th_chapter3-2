@@ -214,7 +214,9 @@ function App() {
                           >
                             <Stack direction="row" spacing={1} alignItems="center">
                               {isNotified && <Notifications fontSize="small" />}
-                              {event.repeat.type !== 'none' && <Repeat fontSize="small" />}
+                              {event.repeat.type !== 'none' && (
+                                <Repeat fontSize="small" aria-label="반복 일정" />
+                              )}
                               <Typography
                                 variant="caption"
                                 noWrap
@@ -302,7 +304,9 @@ function App() {
                                 >
                                   <Stack direction="row" spacing={1} alignItems="center">
                                     {isNotified && <Notifications fontSize="small" />}
-                                    {event.repeat.type !== 'none' && <Repeat fontSize="small" />}
+                                    {event.repeat.type !== 'none' && (
+                                      <Repeat fontSize="small" aria-label="반복 일정" />
+                                    )}
                                     <Typography
                                       variant="caption"
                                       noWrap
