@@ -5,10 +5,13 @@ import {
   setupMockHandlerCreation,
   setupMockHandlerDeletion,
   setupMockHandlerUpdating,
+  setupMockHandlerRepeatEvents,
+  setupMockHandlerSingleRepeatEvent,
 } from '../../__mocks__/handlersUtils.ts';
 import { useEventOperations } from '../../hooks/useEventOperations.ts';
 import { server } from '../../setupTests.ts';
 import { Event } from '../../types.ts';
+import { EventForm } from '../../types.ts';
 
 const enqueueSnackbarFn = vi.fn();
 
@@ -70,6 +73,34 @@ it('정의된 이벤트 정보를 기준으로 적절하게 저장이 된다', a
   expect(result.current.events).toEqual([{ ...newEvent, id: '1' }]);
 });
 
+it('반복 일정을 적절하게 저장할 수 있다', async () => {
+  setupMockHandlerRepeatEvents();
+
+  const { result } = renderHook(() => useEventOperations(false));
+
+  await act(() => Promise.resolve(null));
+
+  const repeatEvent: EventForm = {
+    title: '매주 팀 회의',
+    date: '2025-10-15',
+    startTime: '09:00',
+    endTime: '10:00',
+    description: '주간 팀 미팅',
+    location: '회의실 A',
+    category: '업무',
+    repeat: { type: 'weekly' as const, interval: 1, endDate: '2025-10-30' }, // 타입 명시
+    notificationTime: 10,
+  };
+
+  await act(async () => {
+    await result.current.saveEvent(repeatEvent);
+  });
+
+  // 반복 일정이 생성되었는지 확인
+  expect(result.current.events[0].title).toBe('매주 팀 회의');
+  expect(result.current.events[0].repeat.type).toBe('weekly');
+});
+
 it("새로 정의된 'title', 'endTime' 기준으로 적절하게 일정이 업데이트 된다", async () => {
   setupMockHandlerUpdating();
 
@@ -95,6 +126,36 @@ it("새로 정의된 'title', 'endTime' 기준으로 적절하게 일정이 업�
   });
 
   expect(result.current.events[0]).toEqual(updatedEvent);
+});
+
+it('반복 일정을 수정할 수 있다', async () => {
+  setupMockHandlerRepeatEvents();
+
+  const { result } = renderHook(() => useEventOperations(true));
+
+  await act(() => Promise.resolve(null));
+
+  const updatedRepeatEvent: Event = {
+    id: '1',
+    title: '수정된 매주 팀 회의',
+    date: '2025-10-15',
+    startTime: '09:00',
+    endTime: '10:00',
+    description: '수정된 주간 팀 미팅',
+    location: '회의실 A',
+    category: '업무',
+    repeat: { type: 'weekly' as const, interval: 2, endDate: '2025-11-30' }, // 간격과 종료일 변경, 타입 명시
+    notificationTime: 15,
+  };
+
+  await act(async () => {
+    await result.current.saveEvent(updatedRepeatEvent);
+  });
+
+  // 반복 일정이 수정되었는지 확인
+  expect(result.current.events[0].title).toBe('수정된 매주 팀 회의');
+  expect(result.current.events[0].repeat.interval).toBe(2);
+  expect(result.current.events[0].notificationTime).toBe(15);
 });
 
 it('존재하는 이벤트 삭제 시 에러없이 아이템이 삭제된다.', async () => {
@@ -170,4 +231,34 @@ it("네트워크 오류 시 '일정 삭제 실패'라는 텍스트가 노출되�
   expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정 삭제 실패', { variant: 'error' });
 
   expect(result.current.events).toHaveLength(1);
+});
+
+it('반복 일정을 단일 일정으로 변경할 수 있다', async () => {
+  setupMockHandlerSingleRepeatEvent(); // 반복 일정을 단일 일정으로 변경하는 전용 mock handler 사용
+
+  const { result } = renderHook(() => useEventOperations(true));
+
+  await act(() => Promise.resolve(null));
+
+  const eventToSingle: Event = {
+    id: '1',
+    title: '단일 회의로 변경',
+    date: '2025-10-15',
+    startTime: '09:00',
+    endTime: '10:00',
+    description: '단일 회의',
+    location: '회의실 A',
+    category: '업무',
+    repeat: { type: 'none' as const, interval: 0 }, // 타입 명시
+    notificationTime: 10,
+  };
+
+  await act(async () => {
+    await result.current.saveEvent(eventToSingle);
+  });
+
+  // 반복 일정이 단일 일정으로 변경되었는지 확인
+  expect(result.current.events[0].repeat.type).toBe('none');
+  expect(result.current.events[0].repeat.interval).toBe(0);
+  expect(result.current.events[0].title).toBe('단일 회의로 변경');
 });
