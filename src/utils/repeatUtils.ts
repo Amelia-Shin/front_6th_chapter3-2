@@ -1,83 +1,52 @@
-import { EventForm, RepeatType } from '../types';
-import { formatDate } from './dateUtils';
+import { EventForm } from '../types';
 
-export const MAX_REPEAT_END_DATE = '2025-10-30';
+export const generateRepeatEvents = (eventData: EventForm): EventForm[] => {
+  const { repeat, date, startTime, endTime, ...baseEvent } = eventData;
 
-/**
- * 반복 일정의 모든 발생 일자를 계산합니다
- */
-export function generateRepeatEvents(event: EventForm): EventForm[] {
-  const { repeat } = event;
-
-  if (repeat.type === 'none') {
-    return [event];
+  if (!repeat || repeat.type === 'none' || !repeat.endDate) {
+    return [eventData];
   }
 
   const events: EventForm[] = [];
-  const startDate = new Date(event.date);
-  const endDate = repeat.endDate ? new Date(repeat.endDate) : new Date(MAX_REPEAT_END_DATE);
-
-  // 시작일도 포함
-  events.push(event);
+  const startDate = new Date(date);
+  const endDate = new Date(repeat.endDate);
 
   let currentDate = new Date(startDate);
 
-  while (true) {
-    currentDate = getNextOccurrence(currentDate, repeat.type, repeat.interval);
-
-    if (currentDate > endDate) {
-      break;
-    }
+  // 시작일부터 종료일까지 반복 일정 생성
+  while (currentDate <= endDate) {
+    const eventDate = currentDate.toISOString().split('T')[0];
 
     events.push({
-      ...event,
-      date: formatDate(currentDate),
+      ...baseEvent,
+      date: eventDate,
+      startTime,
+      endTime,
+      repeat: {
+        type: repeat.type,
+        interval: repeat.interval,
+        endDate: repeat.endDate,
+      },
     });
+
+    // 다음 반복 날짜 계산
+    switch (repeat.type) {
+      case 'daily':
+        currentDate.setDate(currentDate.getDate() + repeat.interval);
+        break;
+      case 'weekly':
+        currentDate.setDate(currentDate.getDate() + 7 * repeat.interval);
+        break;
+      case 'monthly':
+        currentDate.setMonth(currentDate.getMonth() + repeat.interval);
+        break;
+      case 'yearly':
+        currentDate.setFullYear(currentDate.getFullYear() + repeat.interval);
+        break;
+      default:
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
   }
 
   return events;
-}
-
-/**
- * 다음 반복 일정 발생 일자를 계산합니다
- */
-function getNextOccurrence(currentDate: Date, repeatType: RepeatType, interval: number): Date {
-  const nextDate = new Date(currentDate);
-
-  switch (repeatType) {
-    case 'daily':
-      nextDate.setDate(nextDate.getDate() + interval);
-      break;
-
-    case 'weekly':
-      nextDate.setDate(nextDate.getDate() + interval * 7);
-      break;
-
-    case 'monthly':
-      // 매월 반복: 31일에 매월을 선택한다면 31일에만 생성
-      nextDate.setMonth(nextDate.getMonth() + interval);
-
-      // 해당 월에 해당 일자가 없는 경우 (예: 2월 31일) 건너뛰기
-      if (nextDate.getDate() !== currentDate.getDate()) {
-        // 일자가 맞지 않으면 다음 달로 계속 시도
-        return getNextOccurrence(nextDate, repeatType, interval);
-      }
-      break;
-
-    case 'yearly':
-      // 매년 반복: 윤년 29일에 매년을 선택한다면 29일에만 생성
-      nextDate.setFullYear(nextDate.getFullYear() + interval);
-
-      // 해당 년도에 해당 일자가 없는 경우 (예: 평년 2월 29일) 건너뛰기
-      if (nextDate.getDate() !== currentDate.getDate()) {
-        // 일자가 맞지 않으면 다음 년도로 계속 시도
-        return getNextOccurrence(nextDate, repeatType, interval);
-      }
-      break;
-
-    default:
-      break;
-  }
-
-  return nextDate;
-}
+};

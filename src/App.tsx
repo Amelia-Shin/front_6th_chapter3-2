@@ -51,7 +51,6 @@ import {
   getWeeksAtMonth,
 } from './utils/dateUtils';
 import { findOverlappingEvents } from './utils/eventOverlap';
-import { generateRepeatEvents } from './utils/repeatUtils.ts';
 import { getTimeErrorMessage } from './utils/timeValidation';
 
 const categories = ['업무', '개인', '가족', '기타'];
@@ -147,16 +146,8 @@ function App() {
       notificationTime,
     };
 
-    // 반복 일정인 경우 모든 발생 일정 생성
-    const repeatEvents =
-      isRepeating && !editingEvent ? generateRepeatEvents(eventData) : [eventData];
-
-    // 겹치는 일정 확인
-    const overlapping = [];
-    for (const eventData of repeatEvents) {
-      const overlaps = findOverlappingEvents(eventData, events);
-      overlapping.push(...overlaps);
-    }
+    // 겹치는 일정 확인 (단일 일정만 체크)
+    const overlapping = findOverlappingEvents(eventData, events);
 
     if (overlapping.length > 0) {
       setOverlappingEvents(overlapping);
