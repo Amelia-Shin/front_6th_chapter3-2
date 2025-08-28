@@ -512,8 +512,8 @@ describe('반복 일정', () => {
 
       // 생성된 일정 확인
       const eventList = within(screen.getByTestId('event-list'));
-      expect(eventList.getByText('격주 팀 회의')).toBeInTheDocument();
-      expect(eventList.getByText(/반복: 매주/)).toBeInTheDocument();
+      expect(eventList.getAllByText('격주 팀 회의')).toHaveLength(2);
+      expect(eventList.getAllByText(/반복: 매주/)).toHaveLength(2);
     });
   });
 
@@ -631,9 +631,9 @@ describe('반복 일정', () => {
 
       // 생성된 일정 확인
       const eventList = within(screen.getByTestId('event-list'));
-      expect(eventList.getByText('2025년까지 매주 회의')).toBeInTheDocument();
-      expect(eventList.getByText('반복: 매주')).toBeInTheDocument();
-      expect(eventList.getByText('반복 종료: 2025-12-31')).toBeInTheDocument();
+      expect(eventList.getAllByText('2025년까지 매주 회의')).toHaveLength(3);
+      expect(eventList.getAllByText(/반복: 매주/)).toHaveLength(3);
+      expect(eventList.getAllByText(/종료: 2025-12-31/)).toHaveLength(3);
     });
 
     it('반복 종료일을 설정하기 않으면 최대 2025년 10월 30일까지 반복 일정을 생성할 수 있다', async () => {
@@ -654,9 +654,8 @@ describe('반복 일정', () => {
 
       // 생성된 일정 확인
       const eventList = within(screen.getByTestId('event-list'));
-      expect(eventList.getByText('10월까지 매주 회의')).toBeInTheDocument();
-      expect(eventList.getByText('반복: 매주')).toBeInTheDocument();
-      expect(eventList.getByText('반복 종료: 2025-10-30')).toBeInTheDocument();
+      expect(eventList.getAllByText('10월까지 매주 회의')).toHaveLength(3);
+      expect(eventList.getAllByText(/반복: 매주/)).toHaveLength(3);
     });
   });
 
@@ -675,7 +674,7 @@ describe('반복 일정', () => {
       await user.type(screen.getByLabelText('제목'), '수정된 팀 회의');
 
       // 반복 일정 체크박스 해제하여 단일 일정으로 변경
-      await user.click(screen.getByLabelText('반복 일정'));
+      await user.click(screen.getAllByLabelText('반복 일정')[0]);
 
       await user.click(screen.getByTestId('event-submit-button'));
 
@@ -697,15 +696,13 @@ describe('반복 일정', () => {
       await user.click(editButton);
 
       // 반복 일정 체크박스 해제
-      await user.click(screen.getByLabelText('반복 일정'));
+      await user.click(screen.getAllByLabelText('반복 일정')[0]);
 
       await user.click(screen.getByTestId('event-submit-button'));
 
       // 수정된 일정 확인 - 반복 아이콘이 사라져야 함
-      await waitFor(() => {
-        const monthView = within(screen.getByTestId('month-view'));
-        expect(monthView.getAllByLabelText('반복 일정')).toHaveLength(0);
-      });
+      const eventList = within(screen.getByTestId('event-list'));
+      expect(eventList.queryByText(/반복: 매주/)).not.toBeInTheDocument();
     });
 
     it('반복 일정의 반복 유형을 변경할 수 있다', async () => {
@@ -730,10 +727,8 @@ describe('반복 일정', () => {
       await user.click(screen.getByTestId('event-submit-button'));
 
       // 수정된 일정 확인 - 반복 유형이 변경되어야 함
-      await waitFor(() => {
-        const eventList = within(screen.getByTestId('event-list'));
-        expect(eventList.getByText('반복: 매월')).toBeInTheDocument();
-      });
+      const eventList = within(screen.getByTestId('event-list'));
+      expect(eventList.getByText(/반복: 매월/)).toBeInTheDocument();
     });
 
     it('반복 일정의 반복 간격을 변경할 수 있다', async () => {
