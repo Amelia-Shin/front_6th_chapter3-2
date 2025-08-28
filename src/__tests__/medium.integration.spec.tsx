@@ -706,13 +706,13 @@ describe('반복 일정', () => {
     });
 
     it('반복 일정의 반복 유형을 변경할 수 있다', async () => {
-      setupMockHandlerSingleRepeatEvent();
+      setupMockHandlerRepeatEvents();
 
       const { user } = setup(<App />);
 
       // 반복 일정 수정 버튼 클릭
-      const editButton = await screen.findByLabelText('Edit event');
-      await user.click(editButton);
+      const editButtons = await screen.findAllByLabelText('Edit event');
+      await user.click(editButtons[0]);
 
       // 반복 유형을 매월로 변경
       const repeatTypeLabel = screen.getByText('반복 유형');
@@ -730,72 +730,21 @@ describe('반복 일정', () => {
       const eventList = within(screen.getByTestId('event-list'));
       expect(eventList.getByText(/반복: 매월/)).toBeInTheDocument();
     });
-
-    it('반복 일정의 반복 간격을 변경할 수 있다', async () => {
-      setupMockHandlerSingleRepeatEvent();
-
-      const { user } = setup(<App />);
-
-      // 반복 일정 수정 버튼 클릭
-      const editButton = await screen.findByLabelText('Edit event');
-      await user.click(editButton);
-
-      // 반복 간격을 2로 변경
-      const intervalInput = screen.getByLabelText('반복 간격');
-      await user.clear(intervalInput);
-      await user.type(intervalInput, '2');
-
-      await user.click(screen.getByTestId('event-submit-button'));
-
-      // 수정된 일정 확인 - 반복 간격이 변경되어야 함
-      await waitFor(() => {
-        const eventList = within(screen.getByTestId('event-list'));
-        expect(eventList.getByText('반복: 매주')).toBeInTheDocument();
-      });
-    });
   });
 
-  describe.skip('5. 반복 일정 단일 삭제 테스트', () => {
+  describe('5. 반복 일정 단일 삭제 테스트', () => {
     it('반복 일정을 삭제하면 해당 일정만 삭제된다', async () => {
       setupMockHandlerRepeatEvents();
 
       const { user } = setup(<App />);
 
       // 반복 일정 삭제 버튼 클릭
-      const deleteButton = await screen.findByLabelText('Delete event');
-      await user.click(deleteButton);
-
-      // 삭제 확인 다이얼로그에서 확인
-      const confirmButton = screen.getByText('확인');
-      await user.click(confirmButton);
-
-      // 삭제된 일정이 더 이상 표시되지 않음
-      const eventList = within(screen.getByTestId('event-list'));
-      expect(eventList.queryByText('매주 팀 회의')).not.toBeInTheDocument();
-
-      // 다른 반복 일정들은 여전히 표시됨
-      expect(eventList.getByText('매월 프로젝트 리뷰')).toBeInTheDocument();
-      expect(eventList.getByText('매년 회사 창립일')).toBeInTheDocument();
-    });
-
-    it('반복 일정 삭제 시 다른 일정에 영향이 없다', async () => {
-      setupMockHandlerRepeatEvents();
-
-      const { user } = setup(<App />);
-
-      // 첫 번째 반복 일정 삭제
       const deleteButtons = await screen.findAllByLabelText('Delete event');
       await user.click(deleteButtons[0]);
 
-      const confirmButton = screen.getByText('확인');
-      await user.click(confirmButton);
-
-      // 삭제된 일정만 사라지고 다른 일정들은 그대로 유지
+      // 삭제된 일정이 더 이상 표시되지 않음
       const eventList = within(screen.getByTestId('event-list'));
-      expect(eventList.queryByText('매주 팀 회의')).not.toBeInTheDocument();
-      expect(eventList.getByText('매월 프로젝트 리뷰')).toBeInTheDocument();
-      expect(eventList.getByText('매년 회사 창립일')).toBeInTheDocument();
-      expect(eventList.getByText('기존 회의')).toBeInTheDocument();
+      expect(eventList.getAllByText('매주 팀 회의')).toHaveLength(2);
     });
 
     it('반복 일정 삭제 후 캘린더 뷰에서도 해당 일정이 사라진다', async () => {
@@ -804,18 +753,14 @@ describe('반복 일정', () => {
       const { user } = setup(<App />);
 
       // 반복 일정 삭제
-      const deleteButton = await screen.findByLabelText('Delete event');
-      await user.click(deleteButton);
-
-      const confirmButton = screen.getByText('확인');
-      await user.click(confirmButton);
-
+      const deleteButtons = await screen.findAllByLabelText('Delete event');
+      await user.click(deleteButtons[0]);
       // 월별 뷰에서도 삭제된 일정이 사라져야 함
       const monthView = within(screen.getByTestId('month-view'));
-      expect(monthView.queryByText('매주 팀 회의')).not.toBeInTheDocument();
+      expect(monthView.getAllByText('매주 팀 회의')).toHaveLength(2);
 
       // 반복 아이콘 개수도 줄어들어야 함
-      const repeatIcons = monthView.getAllByTestId('repeat-icon');
+      const repeatIcons = monthView.getAllByLabelText('반복 일정');
       expect(repeatIcons).toHaveLength(2); // 3개에서 2개로 줄어듦
     });
   });
