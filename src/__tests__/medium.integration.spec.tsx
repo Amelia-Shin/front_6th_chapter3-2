@@ -82,7 +82,7 @@ const saveSchedule = async (
       await user.type(intervalInput, repeat.interval.toString());
     }
 
-    const endDate = repeat.endDate ?? '2025-10-30';
+    const endDate = repeat.endDate ?? '2025-10-31';
     await user.type(screen.getByLabelText('반복 종료일'), endDate);
   }
   await user.click(screen.getByTestId('event-submit-button'));
