@@ -129,6 +129,11 @@ function App() {
       return;
     }
 
+    // 반복 일정의 기본 종료일 설정 (2025년 10월 30일)
+    const getDefaultEndDate = () => {
+      return '2025-10-30';
+    };
+
     const eventData: Event | EventForm = {
       id: editingEvent ? editingEvent.id : undefined,
       title,
@@ -141,7 +146,7 @@ function App() {
       repeat: {
         type: isRepeating ? repeatType : 'none',
         interval: repeatInterval,
-        endDate: repeatEndDate || undefined,
+        endDate: isRepeating ? repeatEndDate || getDefaultEndDate() : undefined,
       },
       notificationTime,
     };
@@ -153,6 +158,10 @@ function App() {
       setOverlappingEvents(overlapping);
       setIsOverlapDialogOpen(true);
     } else {
+      // editingEvent 상태를 미리 저장 (saveEvent 호출 중에 변경될 수 있음)
+      const isEditing = Boolean(editingEvent);
+      console.log('🔍 addOrUpdateEvent:', { isEditing, editingEvent: !!editingEvent });
+
       await saveEvent(eventData);
       resetForm();
     }

@@ -1,7 +1,7 @@
 import { EventForm } from '../types';
 
 export const generateRepeatEvents = (eventData: EventForm): EventForm[] => {
-  const { repeat, date, startTime, endTime, ...baseEvent } = eventData;
+  const { repeat, date, startTime, endTime, id, ...baseEvent } = eventData;
 
   if (!repeat || repeat.type === 'none' || !repeat.endDate) {
     return [eventData];

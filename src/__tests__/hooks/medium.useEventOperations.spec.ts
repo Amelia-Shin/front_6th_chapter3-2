@@ -262,3 +262,36 @@ it('반복 일정을 단일 일정으로 변경할 수 있다', async () => {
   expect(result.current.events[0].repeat.interval).toBe(0);
   expect(result.current.events[0].title).toBe('단일 회의로 변경');
 });
+
+it('단일 일정을 반복 일정으로 변경할 수 있다', async () => {
+  setupMockHandlerUpdating(); // 단일 일정 수정용 mock handler 사용
+
+  const { result } = renderHook(() => useEventOperations(true));
+
+  await act(() => Promise.resolve(null));
+
+  // 기존 단일 일정을 반복 일정으로 변경
+  const eventToRepeat: Event = {
+    id: '1',
+    title: '반복 회의로 변경',
+    date: '2025-10-15',
+    startTime: '09:00',
+    endTime: '10:00',
+    description: '반복 회의',
+    location: '회의실 A',
+    category: '업무',
+    repeat: { type: 'weekly' as const, interval: 1, endDate: '2025-11-15' }, // 반복 일정으로 변경
+    notificationTime: 10,
+  };
+
+  await act(async () => {
+    await result.current.saveEvent(eventToRepeat);
+  });
+
+  // 단일 일정이 반복 일정으로 변경되었는지 확인
+  expect(result.current.events[0].repeat.type).toBe('weekly');
+  expect(result.current.events[0].repeat.interval).toBe(1);
+  expect(result.current.events[0].title).toBe('반복 회의로 변경');
+  // 반복 일정이 생성되어 여러 개의 이벤트가 있어야 함
+  expect(result.current.events.length).toBeGreaterThan(1);
+});

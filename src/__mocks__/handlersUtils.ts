@@ -191,6 +191,16 @@ export const setupMockHandlerRepeatEvents = () => {
       });
 
       return HttpResponse.json(mockEvents);
+    }),
+    http.delete('/api/events/:id', ({ params }) => {
+      const { id } = params;
+      const index = mockEvents.findIndex((event) => event.id === id);
+
+      if (index > -1) {
+        mockEvents.splice(index, 1);
+        return new HttpResponse(null, { status: 204 });
+      }
+      return new HttpResponse(null, { status: 404 });
     })
   );
 };
