@@ -5,7 +5,6 @@ import { UserEvent, userEvent } from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { SnackbarProvider } from 'notistack';
 import { ReactElement } from 'react';
-import { debug } from 'vitest-preview';
 
 import {
   setupMockHandlerCreation,
@@ -88,7 +87,7 @@ const saveSchedule = async (
   await user.click(screen.getByTestId('event-submit-button'));
 };
 
-describe('일정 CRUD 및 기본 기능', { timeout: 30000 }, () => {
+describe('일정 CRUD 및 기본 기능', () => {
   it('입력한 새로운 일정 정보에 맞춰 모든 필드가 이벤트 리스트에 정확히 저장된다.', async () => {
     setupMockHandlerCreation();
 
@@ -150,7 +149,7 @@ describe('일정 CRUD 및 기본 기능', { timeout: 30000 }, () => {
   });
 });
 
-describe('일정 뷰', { timeout: 30000 }, () => {
+describe('일정 뷰', () => {
   it('주별 뷰를 선택 후 해당 주에 일정이 없으면, 일정이 표시되지 않는다.', async () => {
     // ! 현재 시스템 시간 2025-10-01
     const { user } = setup(<App />);
@@ -228,7 +227,7 @@ describe('일정 뷰', { timeout: 30000 }, () => {
   });
 });
 
-describe('검색 기능', { timeout: 30000 }, () => {
+describe('검색 기능', () => {
   beforeEach(() => {
     server.use(
       http.get('/api/events', () => {
@@ -301,7 +300,7 @@ describe('검색 기능', { timeout: 30000 }, () => {
   });
 });
 
-describe('일정 충돌', { timeout: 30000 }, () => {
+describe('일정 충돌', () => {
   afterEach(() => {
     server.resetHandlers();
   });
@@ -378,7 +377,7 @@ it('notificationTime을 10으로 하면 지정 시간 10분 전 알람 텍스트
   expect(screen.getByText('10분 후 기존 회의 일정이 시작됩니다.')).toBeInTheDocument();
 });
 
-describe('반복 일정', { timeout: 30000 }, () => {
+describe('반복 일정', () => {
   // beforeEach(() => {
   //   vi.setSystemTime(new Date('2025-10-15'));
   // });
@@ -388,7 +387,7 @@ describe('반복 일정', { timeout: 30000 }, () => {
   //   server.resetHandlers();
   // });
 
-  describe('1. 반복 유형 선택 테스트', { timeout: 30000 }, () => {
+  describe('1. 반복 유형 선택 테스트', () => {
     it('일정 생성 시 반복 유형을 선택할 수 있다', async () => {
       const { user } = setup(<App />);
 
