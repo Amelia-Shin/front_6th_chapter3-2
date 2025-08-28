@@ -424,8 +424,8 @@ describe('반복 일정', () => {
 
       // 생성된 일정 확인
       const eventList = within(screen.getByTestId('event-list'));
-      expect(eventList.getByText('매일 아침 체크인')).toBeInTheDocument();
-      expect(eventList.getByText('반복: 매일')).toBeInTheDocument();
+      expect(eventList.getAllByText('매일 아침 체크인')).toHaveLength(17);
+      expect(eventList.getAllByText(/반복: 매일/)).toHaveLength(17);
     });
 
     it('매월 반복 일정을 생성할 수 있다', async () => {
@@ -447,7 +447,7 @@ describe('반복 일정', () => {
       // 생성된 일정 확인
       const eventList = within(screen.getByTestId('event-list'));
       expect(eventList.getByText('매월 말 프로젝트 리뷰')).toBeInTheDocument();
-      expect(eventList.getByText('반복: 매월')).toBeInTheDocument();
+      expect(eventList.getByText(/반복: 매월/)).toBeInTheDocument();
     });
 
     it('매년 반복 일정을 생성할 수 있다', async () => {
@@ -469,7 +469,7 @@ describe('반복 일정', () => {
       // 생성된 일정 확인
       const eventList = within(screen.getByTestId('event-list'));
       expect(eventList.getByText('매년 회사 창립일')).toBeInTheDocument();
-      expect(eventList.getByText('반복: 매년')).toBeInTheDocument();
+      expect(eventList.getByText(/반복: 매년/)).toBeInTheDocument();
     });
 
     it('31일에 매월 반복을 선택하면 31일에만 생성된다', async () => {
@@ -491,7 +491,7 @@ describe('반복 일정', () => {
       // 생성된 일정 확인
       const eventList = within(screen.getByTestId('event-list'));
       expect(eventList.getByText('31일 프로젝트 리뷰')).toBeInTheDocument();
-      expect(eventList.getByText('반복: 매월')).toBeInTheDocument();
+      expect(eventList.getByText(/반복: 매월/)).toBeInTheDocument();
     });
 
     it('격주(2주마다) 반복 일정을 생성할 수 있다', async () => {
@@ -513,7 +513,7 @@ describe('반복 일정', () => {
       // 생성된 일정 확인
       const eventList = within(screen.getByTestId('event-list'));
       expect(eventList.getByText('격주 팀 회의')).toBeInTheDocument();
-      expect(eventList.getByText('반복: 매주')).toBeInTheDocument();
+      expect(eventList.getByText(/반복: 매주/)).toBeInTheDocument();
     });
   });
 
