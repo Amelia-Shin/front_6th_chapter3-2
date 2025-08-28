@@ -107,9 +107,17 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
       console.log('🔍 새로운 반복 일정 생성');
       await saveRepeatEvents(updatedEventData, true);
     } else {
-      // 단일 일정으로 생성 (반복 해제)
+      // 단일 일정으로 생성 (반복 해제) - 새로운 일정이므로 POST 요청
       console.log('🔍 새로운 단일 일정 생성');
-      await saveSingleEvent(updatedEventData);
+      const response = await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedEventData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create single event');
+      }
     }
 
     console.log('🔍 updateRepeatEvents 완료');
@@ -127,11 +135,19 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
       const isRepeatEvent = eventData.repeat?.type !== 'none';
 
       if (editing) {
-        // 수정 시에는 기존 일정이 반복이거나 새로운 일정이 반복이면 updateRepeatEvents 호출
-        const originalEvent = eventData as Event;
+        // 수정 시에는 현재 메모리에 있는 원본 이벤트를 찾아서 기존 repeat 정보 확인
+        const eventId = (eventData as Event).id;
+        const originalEvent = events.find((event) => event.id === eventId);
+
+        if (!originalEvent) {
+          throw new Error('Original event not found');
+        }
+
         const wasRepeatEvent = originalEvent.repeat?.type !== 'none';
 
         console.log('🔍 editing 모드:', {
+          originalEventId: eventId,
+          originalRepeatType: originalEvent.repeat?.type,
           wasRepeatEvent,
           isRepeatEvent,
           willCallUpdateRepeatEvents: wasRepeatEvent || isRepeatEvent,
