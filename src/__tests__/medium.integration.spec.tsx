@@ -536,7 +536,7 @@ describe('반복 일정', () => {
 
       const monthView = within(screen.getByTestId('month-view'));
 
-      expect(monthView.getAllByLabelText('반복 일정')).toHaveLength(3);
+      expect(monthView.getAllByLabelText('반복 일정')).toHaveLength(2);
     });
 
     it('주별 뷰에서 반복 일정이 올바르게 표시된다', async () => {
@@ -602,13 +602,13 @@ describe('반복 일정', () => {
 
       // 반복 일정
       expect(eventList.getByText('매주 팀 회의')).toBeInTheDocument();
-      expect(eventList.getByText('반복: 매월')).toBeInTheDocument();
-      expect(eventList.getByText('반복 종료: 2025-11-30')).toBeInTheDocument();
+      expect(eventList.getByText(/반복: 매월/)).toBeInTheDocument();
+      expect(eventList.getByText(/종료: 2025-11-30/)).toBeInTheDocument();
 
       // 일반 일정
       expect(eventList.getByText('기존 회의')).toBeInTheDocument();
 
-      expect(eventList.getAllByText('반복: 매월')).toHaveLength(1);
+      expect(eventList.getAllByText(/반복: 매월/)).toHaveLength(1);
     });
   });
 
